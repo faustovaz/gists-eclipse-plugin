@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: plugin.github.gists Core Plugin
+Bundle-SymbolicName: plugin.github.gists.core;singleton:=true
+Bundle-Version: 0.0.1.qualifier
+Bundle-Activator: me.faustovaz.plugin.github.gists.core.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Automatic-Module-Name: plugin.github.gists.core

@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: plugin.github.gists Test Fragment
+Bundle-SymbolicName: plugin.github.gists.test
+Bundle-Version: 0.0.1.qualifier
+Fragment-Host: plugin.github.gists.core;bundle-version="0.0.1"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.eclipse.jdt.junit4.runtime;bundle-version="1.1.0",
+ org.junit;bundle-version="4.11"
+Automatic-Module-Name: plugin.github.gists.test
