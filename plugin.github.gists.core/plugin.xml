@@ -50,5 +50,19 @@
          </toolbar>
       </menuContribution>
    </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="me.faustovaz.plugin.github.gists.preference.GistsPreferences"
+            id="me.faustovaz.plugin.github.gists.preference.GistsPreferences"
+            name="Gists Preferences">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="me.faustovaz.plugin.github.gists.preference.PreferenceInitializer">
+      </initializer>
+   </extension>
 
 </plugin>
