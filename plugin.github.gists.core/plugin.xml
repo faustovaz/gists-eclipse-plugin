@@ -64,5 +64,38 @@
             class="me.faustovaz.plugin.github.gists.preference.PreferenceInitializer">
       </initializer>
    </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            id="me.faustovaz.plugin.github.gists.view.gists"
+            name="Github Gists">
+      </category>
+      <view
+            category="me.faustovaz.plugin.github.gists.view.gists"
+            class="me.faustovaz.plugin.github.gists.view.GistsView"
+            icon="icons/sample.png"
+            id="me.faustovaz.plugin.github.gists.view.GistsView"
+            inject="true"
+            name="Gists View">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               id="me.faustovaz.plugin.github.gists.view.GistsView"
+               ratio="0.5"
+               relationship="right"
+               relative="org.eclipse.ui.views.ProblemView">
+         </view>
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.help.contexts">
+      <contexts
+            file="contexts.xml">
+      </contexts>
+   </extension>
 
 </plugin>
