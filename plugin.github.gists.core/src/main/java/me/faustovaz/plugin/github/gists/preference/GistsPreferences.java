@@ -3,7 +3,7 @@ package me.faustovaz.plugin.github.gists.preference;
 import org.eclipse.jface.preference.*;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.IWorkbench;
-import me.faustovaz.plugin.github.gists.core.Activator;
+import me.faustovaz.plugin.github.gists.core.GistsPlugin;
 import me.faustovaz.plugin.github.gists.custom.MaskedStringFieldEditor;
 
 public class GistsPreferences extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
@@ -12,7 +12,7 @@ public class GistsPreferences extends FieldEditorPreferencePage implements IWork
     
     public GistsPreferences() {
         super(GRID);
-        setPreferenceStore(Activator.getDefault().getPreferenceStore());
+        setPreferenceStore(GistsPlugin.getDefault().getPreferenceStore());
         setTitle("Github Credentials");
         setDescription("Github Credentials for accessing Gists");
     }

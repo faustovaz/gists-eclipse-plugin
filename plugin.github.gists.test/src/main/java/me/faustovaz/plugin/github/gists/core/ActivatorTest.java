@@ -13,7 +13,7 @@ public class ActivatorTest {
 
 	@Test
 	public void veryStupidTest() {
-		assertEquals("plugin.github.gists.core",Activator.PLUGIN_ID);
-		assertTrue("Plugin should be started", Activator.getDefault().started);
+		assertEquals("plugin.github.gists.core",GistsPlugin.PLUGIN_ID);
+		assertTrue("Plugin should be started", GistsPlugin.getDefault().started);
 	}
 }

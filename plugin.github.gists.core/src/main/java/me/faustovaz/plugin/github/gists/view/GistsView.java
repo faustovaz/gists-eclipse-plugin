@@ -1,21 +1,46 @@
 package me.faustovaz.plugin.github.gists.view;
 
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.part.*;
-import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.*;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.SWT;
+import java.io.IOException;
+import java.util.List;
+
 import javax.inject.Inject;
+
+import org.eclipse.egit.github.core.Gist;
+import org.eclipse.egit.github.core.client.GitHubClient;
+import org.eclipse.egit.github.core.service.GistService;
+import org.eclipse.egit.github.core.service.UserService;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.Workbench;
+import org.eclipse.ui.part.ViewPart;
+
+import me.faustovaz.plugin.github.gists.core.GistsPlugin;
 
 public class GistsView extends ViewPart {
 
-    /**
-     * The ID of the view as specified by the extension.
-     */
     public static final String ID = "me.faustovaz.plugin.github.gists.view.GistsView";
 
     @Inject
@@ -26,32 +51,9 @@ public class GistsView extends ViewPart {
     private Action action2;
     private Action doubleClickAction;
 
-    class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
-        @Override
-        public String getColumnText(Object obj, int index) {
-            return getText(obj);
-        }
-
-        @Override
-        public Image getColumnImage(Object obj, int index) {
-            return getImage(obj);
-        }
-
-        @Override
-        public Image getImage(Object obj) {
-            return workbench.getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
-        }
-    }
-
     @Override
     public void createPartControl(Composite parent) {
-        viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-
-        viewer.setContentProvider(ArrayContentProvider.getInstance());
-        viewer.setInput(new String[] { "One", "Two", "Three" });
-        viewer.setLabelProvider(new ViewLabelProvider());
-
-        // Create the help context id for the viewer's control
+        buildTable(parent);
         workbench.getHelpSystem().setHelp(viewer.getControl(), "plugin.github.gists.core.viewer");
         getSite().setSelectionProvider(viewer);
         makeActions();
@@ -60,6 +62,54 @@ public class GistsView extends ViewPart {
         contributeToActionBars();
     }
 
+    public TableViewer buildTable(Composite parent) {
+        if(GistsPlugin.isGitHubCredentialsSaved()) {
+            viewer = buildGistsTable(parent);
+        }
+        else {
+            viewer = buildSingleLineTable(
+                        parent, 
+                        "Please inform your GitHub Credentials in the Gists Preferences Page",
+                        false);
+        }
+        return viewer;
+    }
+    
+    public TableViewer buildSingleLineTable(Composite parent, String message, boolean error) {
+        TableViewer viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+        viewer.setContentProvider(ArrayContentProvider.getInstance());
+        viewer.setLabelProvider(new GistsErrorLabelProvider());
+        if (error)
+            viewer.setInput(new String[] { "Error: " + message });
+        else
+            viewer.setInput(new String[] { message });
+        return viewer;
+    }
+    
+    public TableViewer buildGistsTable(Composite parent) {
+        TableViewer viewer = null;
+        GistService gistService = new GistService(GistsPlugin.getGitHubClient());
+        UserService userService = new UserService(GistsPlugin.getGitHubClient());
+        
+        try {
+            List<Gist> gists = gistService.getGists(userService.getUser().getLogin());
+            viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+            
+            TableColumn fileName = new TableColumn(viewer.getTable(), SWT.LEFT, 0);
+            fileName.setResizable(Boolean.TRUE);
+            fileName.setWidth(32);
+            fileName.setText("");
+            
+            viewer.setContentProvider(new GistContentProvider());
+            viewer.setLabelProvider(new GistLabelProvider());
+            viewer.setInput(gists);
+            viewer.getTable().setHeaderVisible(true);
+            viewer.getTable().setLinesVisible(true);
+        } catch (IOException e) {
+            viewer = buildSingleLineTable(parent, e.getMessage(), true);
+        }        
+        return viewer;
+    }
     private void hookContextMenu() {
         MenuManager menuMgr = new MenuManager("#PopupMenu");
         menuMgr.setRemoveAllWhenShown(true);
@@ -141,4 +191,67 @@ public class GistsView extends ViewPart {
     public void setFocus() {
         viewer.getControl().setFocus();
     }
+}
+
+class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
+    
+    @Inject
+    Workbench workbench;
+    
+    @Override
+    public String getColumnText(Object obj, int index) {
+        return getText(obj);
+    }
+
+    @Override
+    public Image getColumnImage(Object obj, int index) {
+        return getImage(obj);
+    }
+
+    @Override
+    public Image getImage(Object obj) {
+        return workbench.getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
+    }
+}
+
+class GistsErrorLabelProvider extends LabelProvider implements ITableLabelProvider{
+
+    @Override
+    public Image getColumnImage(Object obj, int column) {
+        return null;
+    }
+
+    @Override
+    public String getColumnText(Object obj, int column) {
+        return getText(obj);
+    }
+    
+}
+
+class GistContentProvider implements IStructuredContentProvider {
+    
+    @Override
+    public Object[] getElements(Object inputElement) {
+        return ((List<?>) inputElement).toArray();
+    }
+    
+}
+    
+
+class GistLabelProvider extends LabelProvider implements ITableLabelProvider{
+
+    @Override
+    public Image getColumnImage(Object obj, int column) {
+        return null;
+    }
+
+    @Override
+    public String getColumnText(Object obj, int column) {
+        Gist gist = (Gist) obj;
+        if(column == 0)
+            return gist.getDescription();
+        
+        return null;
+    }
+    
 }

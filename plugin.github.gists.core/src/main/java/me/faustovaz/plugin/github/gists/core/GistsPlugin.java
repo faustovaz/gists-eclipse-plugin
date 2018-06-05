@@ -1,26 +1,31 @@
 package me.faustovaz.plugin.github.gists.core;
 
+import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import me.faustovaz.plugin.github.gists.preference.PreferenceConstants;
+
 /**
  * The activator class controls the plug-in life cycle
  */
-public class Activator extends AbstractUIPlugin {
+public class GistsPlugin extends AbstractUIPlugin {
 
     // The plug-in ID
     public static final String PLUGIN_ID = "plugin.github.gists.core";
 
     // The shared instance
-    private static Activator plugin;
+    private static GistsPlugin plugin;
 
     boolean started;
+    
+    private static GitHubClient gitHubClient;
 
     /**
      * The constructor
      */
-    public Activator() {
+    public GistsPlugin() {
     }
 
     /*
@@ -52,7 +57,7 @@ public class Activator extends AbstractUIPlugin {
      *
      * @return the shared instance
      */
-    public static Activator getDefault() {
+    public static GistsPlugin getDefault() {
         return plugin;
     }
 
@@ -66,5 +71,30 @@ public class Activator extends AbstractUIPlugin {
      */
     public static ImageDescriptor getImageDescriptor(String path) {
         return imageDescriptorFromPlugin(PLUGIN_ID, path);
+    }
+    
+    public static String getStoredValue(String key) {
+        return getDefault().getPreferenceStore().getString(key);
+    }
+    
+    public static GitHubClient getGitHubClient() {
+        if(gitHubClient == null) {
+            gitHubClient = new GitHubClient();
+            gitHubClient.setCredentials(
+                        getStoredValue(PreferenceConstants.P_GITHUB_LOGIN), 
+                        getStoredValue(PreferenceConstants.P_GITHUB_PASSWD));
+        }
+        return gitHubClient;
+    }
+    
+    public GitHubClient newGitHubClient() {
+        gitHubClient = null;
+        return getGitHubClient();
+    }
+
+    public static boolean isGitHubCredentialsSaved() {
+        String login = getStoredValue(PreferenceConstants.P_GITHUB_LOGIN);
+        String passwd = getStoredValue(PreferenceConstants.P_GITHUB_PASSWD);
+        return !(login.trim().isEmpty() || passwd.trim().isEmpty());
     }
 }
