@@ -1,4 +1,4 @@
-package me.faustovaz.plugin.github.gists.preference;
+package me.faustovaz.plugin.github.gists.custom;
 
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.swt.widgets.Composite;

@@ -4,6 +4,7 @@ import org.eclipse.jface.preference.*;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.IWorkbench;
 import me.faustovaz.plugin.github.gists.core.Activator;
+import me.faustovaz.plugin.github.gists.custom.MaskedStringFieldEditor;
 
 public class GistsPreferences extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
