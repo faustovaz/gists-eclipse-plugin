@@ -1,7 +1,6 @@
 package me.faustovaz.plugin.github.gists.view.provider;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,10 +17,10 @@ public class GistContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getChildren(Object obj) {
-        Gist g = new Gist();
-        g.setDescription("UHEEET");
-        g.setFiles(new HashMap<>());
-        return Arrays.asList(g).toArray();
+        Gist gist = (Gist) obj;
+        List<GistFile> files = new ArrayList<>();
+        gist.getFiles().forEach((key, gistFile) -> files.add(gistFile));
+        return files.toArray();
     }
 
     @Override
@@ -31,8 +30,11 @@ public class GistContentProvider implements ITreeContentProvider {
 
     @Override
     public boolean hasChildren(Object obj) {
-        Map<String, GistFile> files = ((Gist) obj).getFiles();
-        return files.size() > 1;
+        if (obj instanceof Gist) {
+            Map<String, GistFile> files = ((Gist) obj).getFiles();
+            return !files.isEmpty();
+        }
+        return false;
     }
     
 }

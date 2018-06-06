@@ -1,6 +1,7 @@
 package me.faustovaz.plugin.github.gists.view.provider;
 
 import org.eclipse.egit.github.core.Gist;
+import org.eclipse.egit.github.core.GistFile;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
@@ -14,9 +15,26 @@ public class GistLabelProvider extends LabelProvider implements ITableLabelProvi
 
     @Override
     public String getColumnText(Object obj, int column) {
-        Gist gist = (Gist) obj;
-        if(column == 0)
-            return gist.getDescription();
+        if (obj instanceof Gist) {
+            Gist gist = (Gist) obj;
+            
+            if(column == 0)
+                return gist.getDescription();
+            if(column == 3)
+                return gist.getCreatedAt().toString();
+            if(column == 4)
+                return gist.getUpdatedAt().toString();
+            
+        } else {
+            GistFile gistFile = (GistFile) obj;
+            
+            if(column == 0)
+                return "";
+            if(column == 1)
+                return gistFile.getFilename();
+            if(column == 2)
+                return gistFile.getRawUrl();
+        }
         
         return null;
     }
