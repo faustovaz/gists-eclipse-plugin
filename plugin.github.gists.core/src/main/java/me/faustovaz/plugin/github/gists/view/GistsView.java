@@ -6,7 +6,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.eclipse.egit.github.core.Gist;
-import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.GistService;
 import org.eclipse.egit.github.core.service.UserService;
 import org.eclipse.jface.action.Action;
@@ -17,27 +16,28 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.ColumnViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.TreeViewerColumn;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.internal.Workbench;
 import org.eclipse.ui.part.ViewPart;
 
 import me.faustovaz.plugin.github.gists.core.GistsPlugin;
+import me.faustovaz.plugin.github.gists.view.provider.GistContentProvider;
+import me.faustovaz.plugin.github.gists.view.provider.GistLabelProvider;
+import me.faustovaz.plugin.github.gists.view.provider.GistsErrorLabelProvider;
 
 public class GistsView extends ViewPart {
 
@@ -46,7 +46,7 @@ public class GistsView extends ViewPart {
     @Inject
     IWorkbench workbench;
 
-    private TableViewer viewer;
+    private ColumnViewer viewer;
     private Action action1;
     private Action action2;
     private Action doubleClickAction;
@@ -62,7 +62,7 @@ public class GistsView extends ViewPart {
         contributeToActionBars();
     }
 
-    public TableViewer buildTable(Composite parent) {
+    public Viewer buildTable(Composite parent) {
         if(GistsPlugin.isGitHubCredentialsSaved()) {
             viewer = buildGistsTable(parent);
         }
@@ -86,29 +86,32 @@ public class GistsView extends ViewPart {
         return viewer;
     }
     
-    public TableViewer buildGistsTable(Composite parent) {
-        TableViewer viewer = null;
+    public ColumnViewer buildGistsTable(Composite parent) {
+        ColumnViewer columnViewer = null;
+        TreeViewer viewer = null;
+        
         GistService gistService = new GistService(GistsPlugin.getGitHubClient());
         UserService userService = new UserService(GistsPlugin.getGitHubClient());
         
         try {
             List<Gist> gists = gistService.getGists(userService.getUser().getLogin());
-            viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+            viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
             
-            TableColumn fileName = new TableColumn(viewer.getTable(), SWT.LEFT, 0);
-            fileName.setResizable(Boolean.TRUE);
-            fileName.setWidth(32);
-            fileName.setText("");
+            TreeViewerColumn filesColumn = new TreeViewerColumn(viewer, SWT.NONE);
+            filesColumn.getColumn().setWidth(300);
+            filesColumn.getColumn().setText("Files");
             
             viewer.setContentProvider(new GistContentProvider());
             viewer.setLabelProvider(new GistLabelProvider());
             viewer.setInput(gists);
-            viewer.getTable().setHeaderVisible(true);
-            viewer.getTable().setLinesVisible(true);
+            viewer.getTree().setHeaderVisible(true);
+            viewer.getTree().setLinesVisible(true);
+            columnViewer = viewer;
         } catch (IOException e) {
-            viewer = buildSingleLineTable(parent, e.getMessage(), true);
+            columnViewer = buildSingleLineTable(parent, e.getMessage(), true);
         }        
-        return viewer;
+        
+        return columnViewer;
     }
     private void hookContextMenu() {
         MenuManager menuMgr = new MenuManager("#PopupMenu");
@@ -191,67 +194,4 @@ public class GistsView extends ViewPart {
     public void setFocus() {
         viewer.getControl().setFocus();
     }
-}
-
-class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
-    
-    @Inject
-    Workbench workbench;
-    
-    @Override
-    public String getColumnText(Object obj, int index) {
-        return getText(obj);
-    }
-
-    @Override
-    public Image getColumnImage(Object obj, int index) {
-        return getImage(obj);
-    }
-
-    @Override
-    public Image getImage(Object obj) {
-        return workbench.getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
-    }
-}
-
-class GistsErrorLabelProvider extends LabelProvider implements ITableLabelProvider{
-
-    @Override
-    public Image getColumnImage(Object obj, int column) {
-        return null;
-    }
-
-    @Override
-    public String getColumnText(Object obj, int column) {
-        return getText(obj);
-    }
-    
-}
-
-class GistContentProvider implements IStructuredContentProvider {
-    
-    @Override
-    public Object[] getElements(Object inputElement) {
-        return ((List<?>) inputElement).toArray();
-    }
-    
-}
-    
-
-class GistLabelProvider extends LabelProvider implements ITableLabelProvider{
-
-    @Override
-    public Image getColumnImage(Object obj, int column) {
-        return null;
-    }
-
-    @Override
-    public String getColumnText(Object obj, int column) {
-        Gist gist = (Gist) obj;
-        if(column == 0)
-            return gist.getDescription();
-        
-        return null;
-    }
-    
 }
