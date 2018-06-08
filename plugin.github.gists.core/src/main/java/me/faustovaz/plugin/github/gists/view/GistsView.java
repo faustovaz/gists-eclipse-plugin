@@ -100,10 +100,6 @@ public class GistsView extends ViewPart {
             TreeViewerColumn descriptionColumn = new TreeViewerColumn(viewer, SWT.NONE);
             descriptionColumn.getColumn().setWidth(300);
             descriptionColumn.getColumn().setText("Description");
-            
-            TreeViewerColumn filesColumn = new TreeViewerColumn(viewer, SWT.NONE);
-            filesColumn.getColumn().setWidth(300);
-            filesColumn.getColumn().setText("Files");
                         
             TreeViewerColumn linkColumn = new TreeViewerColumn(viewer, SWT.NONE);
             linkColumn.getColumn().setWidth(300);
@@ -115,7 +111,7 @@ public class GistsView extends ViewPart {
             
             TreeViewerColumn updatedAtColumn = new TreeViewerColumn(viewer, SWT.NONE);
             updatedAtColumn.getColumn().setWidth(100);
-            updatedAtColumn.getColumn().setText("Created At");
+            updatedAtColumn.getColumn().setText("Updated At");
 
             viewer.setContentProvider(new GistContentProvider());
             viewer.setLabelProvider(new GistLabelProvider());

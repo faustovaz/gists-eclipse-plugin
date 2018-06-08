@@ -20,20 +20,21 @@ public class GistLabelProvider extends LabelProvider implements ITableLabelProvi
             
             if(column == 0)
                 return gist.getDescription();
-            if(column == 3)
+            if(column == 1)
+                return gist.getHtmlUrl();
+            if(column == 2)
                 return gist.getCreatedAt().toString();
-            if(column == 4)
+            if(column == 3)
                 return gist.getUpdatedAt().toString();
             
         } else {
             GistFile gistFile = (GistFile) obj;
             
             if(column == 0)
-                return "";
-            if(column == 1)
                 return gistFile.getFilename();
-            if(column == 2)
+            if(column == 1)
                 return gistFile.getRawUrl();
+            
         }
         
         return null;
