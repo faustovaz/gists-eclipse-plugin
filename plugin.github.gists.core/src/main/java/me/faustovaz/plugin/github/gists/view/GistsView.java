@@ -25,6 +25,8 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IActionBars;
@@ -57,6 +59,7 @@ public class GistsView extends ViewPart {
         workbench.getHelpSystem().setHelp(viewer.getControl(), "plugin.github.gists.core.viewer");
         getSite().setSelectionProvider(viewer);
         makeActions();
+        hookCtrlCAction();
         hookContextMenu();
         hookDoubleClickAction();
         contributeToActionBars();
@@ -162,6 +165,23 @@ public class GistsView extends ViewPart {
         manager.add(action2);
     }
 
+    private void hookCtrlCAction() {
+        viewer.getControl().addKeyListener(new KeyListener() {
+            
+            @Override
+            public void keyReleased(KeyEvent evt) {
+
+            }
+            
+            @Override
+            public void keyPressed(KeyEvent evt) {
+                if(((evt.stateMask & SWT.CTRL) != 0) && (evt.keyCode == 99)) {
+                    //TODO Copy to the Clipboard the Gist URL
+                }
+            }
+        });
+    }
+    
     private void makeActions() {
         action1 = new Action() {
             public void run() {
