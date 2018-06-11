@@ -25,10 +25,15 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;
@@ -58,8 +63,8 @@ public class GistsView extends ViewPart {
         buildTable(parent);
         workbench.getHelpSystem().setHelp(viewer.getControl(), "plugin.github.gists.core.viewer");
         getSite().setSelectionProvider(viewer);
-        makeActions();
         hookCtrlCAction();
+        makeActions();
         hookContextMenu();
         hookDoubleClickAction();
         contributeToActionBars();
@@ -128,6 +133,31 @@ public class GistsView extends ViewPart {
         
         return columnViewer;
     }
+    
+    private void hookCtrlCAction() {
+        viewer.getControl().addKeyListener(new KeyListener() {
+            
+            @Override
+            public void keyReleased(KeyEvent evt) { }
+            
+            @Override
+            public void keyPressed(KeyEvent evt) {
+                if(((evt.stateMask & SWT.CTRL) != 0) && (evt.keyCode == 99)) { //If Ctrl C;
+                    Tree tree = (Tree) evt.getSource();
+                    TreeItem[] selection = tree.getSelection();
+                    if(selection.length > 0) {
+                        Gist gist = (Gist) selection[0].getData();
+                        Clipboard clipboard = new Clipboard(evt.display);
+                        clipboard.setContents(new String[] {gist.getHtmlUrl()}, 
+                                              new Transfer[] {TextTransfer.getInstance()});
+                        clipboard.dispose();
+                        
+                    }
+                }
+            }
+        });
+    }
+
     private void hookContextMenu() {
         MenuManager menuMgr = new MenuManager("#PopupMenu");
         menuMgr.setRemoveAllWhenShown(true);
@@ -163,23 +193,6 @@ public class GistsView extends ViewPart {
     private void fillLocalToolBar(IToolBarManager manager) {
         manager.add(action1);
         manager.add(action2);
-    }
-
-    private void hookCtrlCAction() {
-        viewer.getControl().addKeyListener(new KeyListener() {
-            
-            @Override
-            public void keyReleased(KeyEvent evt) {
-
-            }
-            
-            @Override
-            public void keyPressed(KeyEvent evt) {
-                if(((evt.stateMask & SWT.CTRL) != 0) && (evt.keyCode == 99)) {
-                    //TODO Copy to the Clipboard the Gist URL
-                }
-            }
-        });
     }
     
     private void makeActions() {
