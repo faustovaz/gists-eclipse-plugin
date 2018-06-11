@@ -141,23 +141,35 @@ public class GistsView extends ViewPart {
     }
     
     private void hookCtrlCAction() {
-        viewer.getControl().addKeyListener(new KeyListener() {
-            
-            @Override
-            public void keyReleased(KeyEvent evt) { }
-            
-            @Override
-            public void keyPressed(KeyEvent evt) {
-                if(((evt.stateMask & SWT.CTRL) != 0) && (evt.keyCode == 99)) { //If Ctrl C;
-                    Tree tree = (Tree) evt.getSource();
-                    TreeItem[] selection = tree.getSelection();
-                    if(selection.length > 0) {
-                        Gist gist = (Gist) selection[0].getData();
-                        copyToClipboard(evt.display, gist);
+        if(viewer instanceof TreeViewer) {
+            viewer.getControl().addKeyListener(new KeyListener() {
+                
+                @Override
+                public void keyReleased(KeyEvent evt) { }
+                
+                @Override
+                public void keyPressed(KeyEvent evt) {
+                    if(((evt.stateMask & SWT.CTRL) != 0) && (evt.keyCode == 99)) { //If Ctrl C;
+                        Tree tree = (Tree) evt.getSource();
+                        TreeItem[] selection = tree.getSelection();
+                        if(selection.length > 0) {
+                            Gist gist = (Gist) selection[0].getData();
+                            copyToClipboard(evt.display, gist);
+                        }
                     }
+                    
+                    if(evt.keyCode == SWT.DEL) { //If DELETE is pressed
+                        Tree tree = (Tree) evt.getSource();
+                        TreeItem[] selection = tree.getSelection();
+                        if(selection.length == 1) {
+                            Gist gist = (Gist) selection[0].getData();
+                            deleteGist(gist);
+                        }
+                    }
+                    
                 }
-            }
-        });
+            });   
+        }
     }
 
     private void createContextMenu() {
