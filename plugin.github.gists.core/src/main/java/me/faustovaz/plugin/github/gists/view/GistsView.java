@@ -6,7 +6,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.eclipse.egit.github.core.Gist;
-import org.eclipse.egit.github.core.client.GitHubClient;
+import org.eclipse.egit.github.core.GistFile;
 import org.eclipse.egit.github.core.service.GistService;
 import org.eclipse.egit.github.core.service.UserService;
 import org.eclipse.jface.action.Action;
@@ -61,17 +61,17 @@ public class GistsView extends ViewPart {
     private ColumnViewer viewer;
     private Action action1;
     private Action action2;
-    private Action doubleClickAction;
 
     @Override
     public void createPartControl(Composite parent) {
         buildTable(parent);
         workbench.getHelpSystem().setHelp(viewer.getControl(), "plugin.github.gists.core.viewer");
         getSite().setSelectionProvider(viewer);
-        hookCtrlCAction();
         createContextMenu();
-        //makeActions();
-        //hookContextMenu();
+        hookCtrlCAction();
+        hookDeleteKeyAction();
+        hookDoubleClickAction();
+        
         //hookDoubleClickAction();
         //contributeToActionBars();
     }
@@ -149,7 +149,7 @@ public class GistsView extends ViewPart {
                 
                 @Override
                 public void keyPressed(KeyEvent evt) {
-                    if(((evt.stateMask & SWT.CTRL) != 0) && (evt.keyCode == 99)) { //If Ctrl C;
+                    if(((evt.stateMask & SWT.CTRL) != 0) && (evt.keyCode == 99)) { //If Ctrl C is pressed;
                         Tree tree = (Tree) evt.getSource();
                         TreeItem[] selection = tree.getSelection();
                         if(selection.length > 0) {
@@ -157,7 +157,20 @@ public class GistsView extends ViewPart {
                             copyToClipboard(evt.display, gist);
                         }
                     }
-                    
+                }
+            });   
+        }
+    }
+    
+    private void hookDeleteKeyAction() {
+        if(viewer instanceof TreeViewer) {
+            viewer.getControl().addKeyListener(new KeyListener() {
+                
+                @Override
+                public void keyReleased(KeyEvent evt) { }
+                
+                @Override
+                public void keyPressed(KeyEvent evt) {                 
                     if(evt.keyCode == SWT.DEL) { //If DELETE is pressed
                         Tree tree = (Tree) evt.getSource();
                         TreeItem[] selection = tree.getSelection();
@@ -166,7 +179,6 @@ public class GistsView extends ViewPart {
                             deleteGist(gist);
                         }
                     }
-                    
                 }
             });   
         }
@@ -312,7 +324,7 @@ public class GistsView extends ViewPart {
     private void makeActions() {
         action1 = new Action() {
             public void run() {
-                showMessage("Action 1 executed");
+                
             }
         };
         action1.setText("Action 1");
@@ -322,31 +334,27 @@ public class GistsView extends ViewPart {
 
         action2 = new Action() {
             public void run() {
-                showMessage("Action 2 executed");
+                
             }
         };
         action2.setText("Action 2");
         action2.setToolTipText("Action 2 tooltip");
         action2.setImageDescriptor(workbench.getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-        doubleClickAction = new Action() {
-            public void run() {
-                IStructuredSelection selection = viewer.getStructuredSelection();
-                Object obj = selection.getFirstElement();
-                showMessage("Double-click detected on " + obj.toString());
-            }
-        };
     }
 
     private void hookDoubleClickAction() {
         viewer.addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
-                doubleClickAction.run();
+                IStructuredSelection selection = viewer.getStructuredSelection();
+                Object selectedElement = selection.getFirstElement();
+                if (selectedElement instanceof GistFile) {
+                    GistFile gistFile = (GistFile) selectedElement;
+                    MessageDialog.openInformation(viewer.getControl().getShell(), 
+                                "Gists", 
+                                gistFile.getFilename());
+                }
             }
         });
-    }
-
-    private void showMessage(String message) {
-        MessageDialog.openInformation(viewer.getControl().getShell(), "Gists View", message);
     }
 
     @Override
