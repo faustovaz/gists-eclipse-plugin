@@ -31,6 +31,7 @@ import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
@@ -147,17 +148,20 @@ public class GistsView extends ViewPart {
                     TreeItem[] selection = tree.getSelection();
                     if(selection.length > 0) {
                         Gist gist = (Gist) selection[0].getData();
-                        Clipboard clipboard = new Clipboard(evt.display);
-                        clipboard.setContents(new String[] {gist.getHtmlUrl()}, 
-                                              new Transfer[] {TextTransfer.getInstance()});
-                        clipboard.dispose();
-                        
+                        copyToClipboard(evt.display, gist);
                     }
                 }
             }
         });
     }
 
+    private void copyToClipboard(Display display, Gist gist) {
+        Clipboard clipboard = new Clipboard(display);
+        clipboard.setContents(new String[] {gist.getHtmlUrl()}, 
+                              new Transfer[] {TextTransfer.getInstance()});
+        clipboard.dispose();
+    }
+    
     private void hookContextMenu() {
         MenuManager menuMgr = new MenuManager("#PopupMenu");
         menuMgr.setRemoveAllWhenShown(true);
