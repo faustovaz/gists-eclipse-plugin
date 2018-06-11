@@ -6,6 +6,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.eclipse.egit.github.core.Gist;
+import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.GistService;
 import org.eclipse.egit.github.core.service.UserService;
 import org.eclipse.jface.action.Action;
@@ -30,9 +31,12 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IActionBars;
@@ -65,10 +69,11 @@ public class GistsView extends ViewPart {
         workbench.getHelpSystem().setHelp(viewer.getControl(), "plugin.github.gists.core.viewer");
         getSite().setSelectionProvider(viewer);
         hookCtrlCAction();
-        makeActions();
-        hookContextMenu();
-        hookDoubleClickAction();
-        contributeToActionBars();
+        createContextMenu();
+        //makeActions();
+        //hookContextMenu();
+        //hookDoubleClickAction();
+        //contributeToActionBars();
     }
 
     public Viewer buildTable(Composite parent) {
@@ -155,6 +160,97 @@ public class GistsView extends ViewPart {
         });
     }
 
+    private void createContextMenu() {
+        Menu contextMenu = new Menu(this.viewer.getControl());
+        this.viewer.getControl().setMenu(contextMenu);
+        addCopyGistUrlMenuItem(contextMenu);
+        new MenuItem(contextMenu, SWT.SEPARATOR);
+        addViewMenuItem(contextMenu);
+        addDeleteMenuItem(contextMenu);
+    }
+    
+    private void addCopyGistUrlMenuItem(Menu menu) {
+        MenuItem copyGistItem = new MenuItem(menu, SWT.NONE);
+        copyGistItem.setText("Copy Gist URL");
+        
+        copyGistItem.addSelectionListener(new SelectionListener() {
+            
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                if(viewer instanceof TreeViewer) {
+                    TreeViewer treeViewer = (TreeViewer) viewer;
+                    Gist gist = (Gist) treeViewer.getStructuredSelection().getFirstElement();
+                    copyToClipboard(treeViewer.getControl().getDisplay(), gist);
+                }
+            }
+            
+            @Override
+            public void widgetDefaultSelected(SelectionEvent evt) {
+
+            }
+        });
+        
+    }
+    
+    private void addDeleteMenuItem(Menu menu) {
+        MenuItem deleteItem = new MenuItem(menu, SWT.NONE);
+        deleteItem.setText("Delete Gist");
+        
+        deleteItem.addSelectionListener(new SelectionListener() {
+            
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                if(viewer instanceof TreeViewer) {
+                    TreeViewer treeViewer = (TreeViewer) viewer;
+                    Gist gist  = (Gist) treeViewer.getStructuredSelection().getFirstElement();
+                    deleteGist(gist);                    
+                }
+            }
+            
+            @Override
+            public void widgetDefaultSelected(SelectionEvent arg0) {
+                
+            }
+        });
+        
+    }
+    
+    
+    private void addViewMenuItem(Menu menu) {
+        MenuItem viewMenuItem = new MenuItem(menu, SWT.NONE);
+        viewMenuItem.setText("View Gist");
+        
+        viewMenuItem.addSelectionListener(new SelectionListener() {
+            
+            @Override
+            public void widgetSelected(SelectionEvent arg0) {
+                
+            }
+            
+            @Override
+            public void widgetDefaultSelected(SelectionEvent arg0) {
+                
+            }
+        });
+        
+    }
+    
+    private void deleteGist(Gist gist) {
+        boolean deleteit = MessageDialog.openConfirm(viewer.getControl().getShell(), 
+                "Delete Gist", "Delete Gist?");
+        
+        if (deleteit) {
+            GistService gistService = new GistService(GistsPlugin.getGitHubClient());
+            try {
+                gistService.deleteGist(gist.getId());
+            } catch (IOException e) {
+                MessageDialog.openError(viewer.getControl().getShell(), "Error", e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        
+    }
+    
     private void copyToClipboard(Display display, Gist gist) {
         Clipboard clipboard = new Clipboard(display);
         clipboard.setContents(new String[] {gist.getHtmlUrl()}, 
@@ -165,11 +261,13 @@ public class GistsView extends ViewPart {
     private void hookContextMenu() {
         MenuManager menuMgr = new MenuManager("#PopupMenu");
         menuMgr.setRemoveAllWhenShown(true);
+        
         menuMgr.addMenuListener(new IMenuListener() {
             public void menuAboutToShow(IMenuManager manager) {
                 GistsView.this.fillContextMenu(manager);
             }
         });
+        
         Menu menu = menuMgr.createContextMenu(viewer.getControl());
         viewer.getControl().setMenu(menu);
         getSite().registerContextMenu(menuMgr, viewer);
