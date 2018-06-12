@@ -40,13 +40,17 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import me.faustovaz.plugin.github.gists.core.GistsPlugin;
+import me.faustovaz.plugin.github.gists.editor.StringEditorInput;
 import me.faustovaz.plugin.github.gists.view.provider.GistContentProvider;
 import me.faustovaz.plugin.github.gists.view.provider.GistLabelProvider;
 import me.faustovaz.plugin.github.gists.view.provider.GistsErrorLabelProvider;
@@ -248,7 +252,15 @@ public class GistsView extends ViewPart {
             
             @Override
             public void widgetSelected(SelectionEvent arg0) {
-                
+                if(viewer instanceof TreeViewer) {
+                    TreeViewer treeViewer = (TreeViewer) viewer;
+                    Object selectedElement = treeViewer.getStructuredSelection().getFirstElement();
+                    if(selectedElement instanceof GistFile) {
+                        GistFile gistFile = (GistFile) selectedElement;
+                        
+                        viewGistFile(gistFile);
+                    }
+                }
             }
             
             @Override
@@ -271,6 +283,23 @@ public class GistsView extends ViewPart {
                 MessageDialog.openError(viewer.getControl().getShell(), "Error", e.getMessage());
                 e.printStackTrace();
             }
+        }
+        
+    }
+    
+    private void viewGistFile(GistFile gistFile) {
+        try {
+            IWorkbenchPage page = workbench.getActiveWorkbenchWindow().getActivePage();
+            IEditorDescriptor editor = workbench.getEditorRegistry().getDefaultEditor(gistFile.getFilename());
+            
+            if(editor == null) {
+                editor = workbench.getEditorRegistry().findEditor("org.eclipse.ui.DefaultTextEditor");
+            }
+            
+            page.openEditor(new StringEditorInput(gistFile.getFilename(), gistFile.getContent()), editor.getId());
+        }
+        catch(PartInitException exception) {
+            //TODO Handle the exception
         }
         
     }
@@ -349,9 +378,7 @@ public class GistsView extends ViewPart {
                 Object selectedElement = selection.getFirstElement();
                 if (selectedElement instanceof GistFile) {
                     GistFile gistFile = (GistFile) selectedElement;
-                    MessageDialog.openInformation(viewer.getControl().getShell(), 
-                                "Gists", 
-                                gistFile.getFilename());
+                    viewGistFile(gistFile);
                 }
             }
         });
