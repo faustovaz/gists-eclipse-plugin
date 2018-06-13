@@ -1,6 +1,8 @@
 package me.faustovaz.plugin.github.gists.view;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -9,12 +11,10 @@ import org.eclipse.egit.github.core.Gist;
 import org.eclipse.egit.github.core.GistFile;
 import org.eclipse.egit.github.core.service.GistService;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
@@ -36,16 +36,15 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorDescriptor;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import me.faustovaz.plugin.github.gists.core.GistsPlugin;
@@ -61,13 +60,13 @@ public class GistsView extends ViewPart {
 
     @Inject
     IWorkbench workbench;
-
     private ColumnViewer viewer;
-    private Action action1;
-    private Action action2;
+    private Composite parent;
+    private Action refreshGists;
 
     @Override
     public void createPartControl(Composite parent) {
+        this.parent = parent;
         buildTable(parent);
         workbench.getHelpSystem().setHelp(viewer.getControl(), "plugin.github.gists.core.viewer");
         getSite().setSelectionProvider(viewer);
@@ -75,14 +74,13 @@ public class GistsView extends ViewPart {
         hookCtrlCAction();
         hookDeleteKeyAction();
         hookDoubleClickAction();
-        
-        //hookDoubleClickAction();
-        //contributeToActionBars();
+        createActions();
+        contributeToActionBars();
     }
 
     public Viewer buildTable(Composite parent) {
         if(GistsPlugin.isGitHubCredentialsSaved()) {
-            viewer = buildGistsTable(parent);
+            viewer = buildGistsTable(parent, true);
         }
         else {
             viewer = buildSingleLineTable(
@@ -104,14 +102,14 @@ public class GistsView extends ViewPart {
         return viewer;
     }
     
-    public ColumnViewer buildGistsTable(Composite parent) {
+    public ColumnViewer buildGistsTable(Composite parent, boolean downloadAllContent) {
         ColumnViewer columnViewer = null;
         TreeViewer viewer = null;
         
         PluginService service = new PluginService(GistsPlugin.getGitHubClient());
         
         try {
-            List<Gist> gists = service.getGists(true);
+            List<Gist> gists = service.getGists(downloadAllContent);
             viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
             
             TreeViewerColumn descriptionColumn = new TreeViewerColumn(viewer, SWT.NONE);
@@ -309,66 +307,6 @@ public class GistsView extends ViewPart {
         clipboard.dispose();
     }
     
-    private void hookContextMenu() {
-        MenuManager menuMgr = new MenuManager("#PopupMenu");
-        menuMgr.setRemoveAllWhenShown(true);
-        
-        menuMgr.addMenuListener(new IMenuListener() {
-            public void menuAboutToShow(IMenuManager manager) {
-                GistsView.this.fillContextMenu(manager);
-            }
-        });
-        
-        Menu menu = menuMgr.createContextMenu(viewer.getControl());
-        viewer.getControl().setMenu(menu);
-        getSite().registerContextMenu(menuMgr, viewer);
-    }
-
-    private void contributeToActionBars() {
-        IActionBars bars = getViewSite().getActionBars();
-        fillLocalPullDown(bars.getMenuManager());
-        fillLocalToolBar(bars.getToolBarManager());
-    }
-
-    private void fillLocalPullDown(IMenuManager manager) {
-        manager.add(action1);
-        manager.add(new Separator());
-        manager.add(action2);
-    }
-
-    private void fillContextMenu(IMenuManager manager) {
-        manager.add(action1);
-        manager.add(action2);
-        // Other plug-ins can contribute there actions here
-        manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-    }
-
-    private void fillLocalToolBar(IToolBarManager manager) {
-        manager.add(action1);
-        manager.add(action2);
-    }
-    
-    private void makeActions() {
-        action1 = new Action() {
-            public void run() {
-                
-            }
-        };
-        action1.setText("Action 1");
-        action1.setToolTipText("Action 1 tooltip");
-        action1.setImageDescriptor(
-                PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-
-        action2 = new Action() {
-            public void run() {
-                
-            }
-        };
-        action2.setText("Action 2");
-        action2.setToolTipText("Action 2 tooltip");
-        action2.setImageDescriptor(workbench.getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-    }
-
     private void hookDoubleClickAction() {
         viewer.addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
@@ -381,9 +319,74 @@ public class GistsView extends ViewPart {
             }
         });
     }
+    
+    private void createActions() {
+        this.refreshGists = new Action() {
+            @Override
+            public void run() {
+                viewer.getControl().getDisplay().asyncExec(new Runnable() {
+                    
+                    @Override
+                    public void run() {
+                        if(!viewer.getControl().isDisposed()) {
+                            if(viewer instanceof TreeViewer)
+                                disposeTreeViewer((TreeViewer) viewer);
+                            
+                            if(viewer instanceof TableViewer)
+                                disposeTableViewer((TableViewer) viewer);
+                                
+                            viewer.getControl().dispose();
+                            GistsView.this.viewer = buildGistsTable(parent, false);
+                            parent.layout(true);
+                        }
+                    }
+                    
+                    public void disposeTreeViewer(TreeViewer viewer) {
+                        TreeColumn[] columns = viewer.getTree().getColumns();
+                        
+                        for(TreeColumn column : columns) {
+                            column.dispose();
+                        }
+                        
+                        viewer.setInput(null);
+                        viewer.getTree().setHeaderVisible(false);
+                        viewer.getTree().setLinesVisible(false);
+                    }
+                    
+                    public void disposeTableViewer(TableViewer viewer) {
+                        TableColumn[] columns = viewer.getTable().getColumns();
+                        
+                        for (TableColumn tableColumn : columns) {
+                            tableColumn.dispose();
+                        }
+                        
+                        viewer.setInput(null);
+                        viewer.getTable().setHeaderVisible(false);
+                        viewer.getTable().setLinesVisible(false);
+                    }
+                });
+            }
+        };
+        refreshGists.setToolTipText("Refresh Gists");
+        try {
+            URL url = new URL(GistsPlugin.getDefault().getBundle().getEntry("/") + "/icons/refresh.png");
+            refreshGists.setImageDescriptor(ImageDescriptor.createFromURL(url));
+        } catch(MalformedURLException e) {
+            //TODO Handle the exception
+        }
+    }
+    
+    private void contributeToActionBars() {
+        IActionBars actionBar = getViewSite().getActionBars();
+        IToolBarManager manager = actionBar.getToolBarManager();
+        manager.add(this.refreshGists);
+        manager.add(new Separator());
+    }
 
     @Override
     public void setFocus() {
-        viewer.getControl().setFocus();
+        if(!viewer.getControl().isDisposed()) {
+            viewer.getControl().setFocus();
+        }
     }
 }
