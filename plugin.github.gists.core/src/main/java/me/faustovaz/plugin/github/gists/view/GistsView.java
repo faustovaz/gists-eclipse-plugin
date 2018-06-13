@@ -178,7 +178,7 @@ public class GistsView extends ViewPart {
                     if(evt.keyCode == SWT.DEL) { //If DELETE is pressed
                         Tree tree = (Tree) evt.getSource();
                         TreeItem[] selection = tree.getSelection();
-                        if(selection.length == 1) {
+                        if((selection.length == 1) && (selection[0].getData() instanceof Gist)) {
                             Gist gist = (Gist) selection[0].getData();
                             deleteGist(gist);
                         }
@@ -230,8 +230,11 @@ public class GistsView extends ViewPart {
             public void widgetSelected(SelectionEvent evt) {
                 if(viewer instanceof TreeViewer) {
                     TreeViewer treeViewer = (TreeViewer) viewer;
-                    Gist gist  = (Gist) treeViewer.getStructuredSelection().getFirstElement();
-                    deleteGist(gist);                    
+                    Object element = treeViewer.getStructuredSelection().getFirstElement();
+                    if( element instanceof Gist) { //Just delete if selected element is a Gist
+                        Gist gist  = (Gist) element;
+                        deleteGist(gist);                    
+                    }
                 }
             }
             
@@ -257,7 +260,6 @@ public class GistsView extends ViewPart {
                     Object selectedElement = treeViewer.getStructuredSelection().getFirstElement();
                     if(selectedElement instanceof GistFile) {
                         GistFile gistFile = (GistFile) selectedElement;
-                        
                         viewGistFile(gistFile);
                     }
                 }
