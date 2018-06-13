@@ -8,7 +8,6 @@ import javax.inject.Inject;
 import org.eclipse.egit.github.core.Gist;
 import org.eclipse.egit.github.core.GistFile;
 import org.eclipse.egit.github.core.service.GistService;
-import org.eclipse.egit.github.core.service.UserService;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -136,6 +135,7 @@ public class GistsView extends ViewPart {
             viewer.setInput(gists);
             viewer.getTree().setHeaderVisible(true);
             viewer.getTree().setLinesVisible(true);
+            
             columnViewer = viewer;
         } catch (IOException e) {
             columnViewer = buildSingleLineTable(parent, e.getMessage(), true);
@@ -174,7 +174,7 @@ public class GistsView extends ViewPart {
                 public void keyReleased(KeyEvent evt) { }
                 
                 @Override
-                public void keyPressed(KeyEvent evt) {                 
+                public void keyPressed(KeyEvent evt) {
                     if(evt.keyCode == SWT.DEL) { //If DELETE is pressed
                         Tree tree = (Tree) evt.getSource();
                         TreeItem[] selection = tree.getSelection();
@@ -213,9 +213,7 @@ public class GistsView extends ViewPart {
             }
             
             @Override
-            public void widgetDefaultSelected(SelectionEvent evt) {
-
-            }
+            public void widgetDefaultSelected(SelectionEvent evt) { }
         });
         
     }
@@ -233,7 +231,7 @@ public class GistsView extends ViewPart {
                     Object element = treeViewer.getStructuredSelection().getFirstElement();
                     if( element instanceof Gist) { //Just delete if selected element is a Gist
                         Gist gist  = (Gist) element;
-                        deleteGist(gist);                    
+                        deleteGist(gist);
                     }
                 }
             }
@@ -266,9 +264,7 @@ public class GistsView extends ViewPart {
             }
             
             @Override
-            public void widgetDefaultSelected(SelectionEvent arg0) {
-                
-            }
+            public void widgetDefaultSelected(SelectionEvent arg0) { }
         });
         
     }
