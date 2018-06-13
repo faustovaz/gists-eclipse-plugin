@@ -51,6 +51,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import me.faustovaz.plugin.github.gists.core.GistsPlugin;
 import me.faustovaz.plugin.github.gists.editor.StringEditorInput;
+import me.faustovaz.plugin.github.gists.service.PluginService;
 import me.faustovaz.plugin.github.gists.view.provider.GistContentProvider;
 import me.faustovaz.plugin.github.gists.view.provider.GistLabelProvider;
 import me.faustovaz.plugin.github.gists.view.provider.GistsErrorLabelProvider;
@@ -108,11 +109,10 @@ public class GistsView extends ViewPart {
         ColumnViewer columnViewer = null;
         TreeViewer viewer = null;
         
-        GistService gistService = new GistService(GistsPlugin.getGitHubClient());
-        UserService userService = new UserService(GistsPlugin.getGitHubClient());
+        PluginService service = new PluginService(GistsPlugin.getGitHubClient());
         
         try {
-            List<Gist> gists = gistService.getGists(userService.getUser().getLogin());
+            List<Gist> gists = service.getGists(true);
             viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
             
             TreeViewerColumn descriptionColumn = new TreeViewerColumn(viewer, SWT.NONE);
