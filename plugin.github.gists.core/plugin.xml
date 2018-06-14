@@ -43,7 +43,7 @@
                id="toolbar.sample.id">
             <command
                   commandId="command.sample.id"
-                  icon="icons/sample.gif"
+                  icon="icons/github.png"
                   tooltip="&amp;sample Sample Action"
                   id="sampleAction.id">
             </command>
@@ -73,10 +73,10 @@
       <view
             category="me.faustovaz.plugin.github.gists.view.gists"
             class="me.faustovaz.plugin.github.gists.view.GistsView"
-            icon="icons/sample.png"
+            icon="icons/github.png"
             id="me.faustovaz.plugin.github.gists.view.GistsView"
             inject="true"
-            name="Gists View">
+            name="Github Gists">
       </view>
    </extension>
    <extension
