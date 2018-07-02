@@ -4,21 +4,22 @@
    <extension
          point="org.eclipse.ui.commands">
       <category
-            name="sample category"
-            id="category.sample.id">
+            description="Github gists"
+            id="me.faustovaz.plugin.gihub.gists.maincategory"
+            name="Github - Gists">
       </category>
       <command
-            name="sample command"
-            categoryId="category.sample.id"
-            id="command.sample.id">
+            categoryId="me.faustovaz.plugin.gihub.gists.maincategory"
+            id="me.faustovaz.plugin.gihub.gists.addtogist"
+            name="Add to Gists">
       </command>
    </extension>
 
    <extension
          point="org.eclipse.ui.handlers">
       <handler
-            commandId="command.sample.id"
-            class="me.faustovaz.plugin.github.gists.core.SampleHandler">
+            class="me.faustovaz.plugin.github.gists.handler.AddToGistHandler"
+            commandId="me.faustovaz.plugin.gihub.gists.addtogist">
       </handler>
    </extension>
 
@@ -48,6 +49,23 @@
                   id="sampleAction.id">
             </command>
          </toolbar>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.eclipse.ui.popup.any?before=additions">
+         <separator
+               name="me.faustovaz.plugin.github.gists.core.separator1"
+               visible="true">
+         </separator>
+         <command
+               commandId="me.faustovaz.plugin.gihub.gists.addtogist"
+               icon="icons/github.png"
+               id="me.faustovaz.plugin.gihub.gists.menu.addtogist"
+               label="Add to Gist">
+         </command>
+         <separator
+               name="plugin.github.gists.core.separator2">
+         </separator>
       </menuContribution>
    </extension>
    <extension
